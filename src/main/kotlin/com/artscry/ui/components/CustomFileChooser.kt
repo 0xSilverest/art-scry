@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.jetbrains.skia.Codec
 import java.io.File
@@ -45,9 +46,21 @@ fun CustomFileChooser(
     var showSearchBar by remember { mutableStateOf(false) }
 
     val focusRequester = remember { FocusRequester() }
+    val searchFocusRequester = remember { FocusRequester() }  // Add search focus requester
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
+    }
+
+    LaunchedEffect(showSearchBar) {
+        if (showSearchBar) {
+            delay(100) // Small delay to ensure TextField is composed
+            try {
+                searchFocusRequester.requestFocus()
+            } catch (e: Exception) {
+                // Handle potential focus request failure
+            }
+        }
     }
 
     Dialog(onDismissRequest = onDismiss) {
@@ -60,8 +73,18 @@ fun CustomFileChooser(
                 .focusable(true)
                 .onPreviewKeyEvent { event ->
                     if (event.type == KeyEventType.KeyDown && event.isCtrlPressed && event.key == Key.F) {
-                        showSearchBar = true
+                        showSearchBar = !showSearchBar
+                        if (!showSearchBar) searchQuery = ""
                         true
+                    } else if (event.type == KeyEventType.KeyDown && event.key == Key.Escape) {
+                        if (showSearchBar) {
+                            showSearchBar = false
+                            searchQuery = ""
+                            true
+                        } else {
+                            onDismiss()
+                            true
+                        }
                     } else {
                         false
                     }
@@ -70,8 +93,6 @@ fun CustomFileChooser(
             elevation = 8.dp
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-
-
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -79,16 +100,18 @@ fun CustomFileChooser(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-
                     IconButton(
                         onClick = {
-                            currentPath.parent?.let { currentPath = it }
+                            currentPath.parent?.let {
+                                currentPath = it
+                                searchQuery = ""
+                                showSearchBar = false
+                            }
                         },
                         enabled = currentPath.parent != null
                     ) {
                         Text("←")
                     }
-
 
                     Text(
                         text = currentPath.toString(),
@@ -96,12 +119,13 @@ fun CustomFileChooser(
                         maxLines = 1
                     )
 
-
-                    IconButton(onClick = { showSearchBar = !showSearchBar }) {
+                    IconButton(onClick = {
+                        showSearchBar = !showSearchBar
+                        if (!showSearchBar) searchQuery = ""
+                    }) {
                         Icon(Icons.Default.Search, contentDescription = "Search")
                     }
                 }
-
 
                 if (showSearchBar) {
                     Row(
@@ -113,19 +137,22 @@ fun CustomFileChooser(
                         TextField(
                             value = searchQuery,
                             onValueChange = { searchQuery = it },
-                            placeholder = { Text("Search folders...") },
+                            placeholder = { Text("Search folders... (Ctrl+F to toggle)") },
                             modifier = Modifier
                                 .weight(1f)
-                                .padding(end = 8.dp),
+                                .padding(end = 8.dp)
+                                .focusRequester(searchFocusRequester),
                             singleLine = true
                         )
 
-                        IconButton(onClick = { searchQuery = "" }) {
+                        IconButton(onClick = {
+                            showSearchBar = false
+                            searchQuery = ""
+                        }) {
                             Icon(Icons.Default.Close, contentDescription = "Clear Search")
                         }
                     }
                 }
-
 
                 val entries = remember(currentPath, searchQuery) {
                     currentPath.toFile().listFiles()

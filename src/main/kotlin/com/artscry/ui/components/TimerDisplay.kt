@@ -9,13 +9,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
+import com.artscry.model.TimerConfig
 import kotlinx.coroutines.delay
-
-data class TimerConfig(
-    val duration: Int,
-    val blackoutEnabled: Boolean = false,
-    val blackoutDuration: Int? = null
-)
 
 @Composable
 fun TimerDisplay(

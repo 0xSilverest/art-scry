@@ -1,6 +1,7 @@
 package com.artscry.ui.screens
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
@@ -10,12 +11,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.artscry.model.AppState
 import com.artscry.model.PracticeMode
+import com.artscry.model.TimerConfig
 import com.artscry.ui.components.ImageViewer
 import com.artscry.ui.components.SetupScreen
-import com.artscry.ui.components.TimerConfig
 import com.artscry.ui.components.TimerDisplay
 import com.artscry.ui.theme.ThemeState
 
@@ -32,7 +35,7 @@ fun MainScreen(state: AppState) {
                 folder = settings.folderPath,
                 limit = settings.imageLimit
             )
-            
+
             if (settings.timerEnabled) {
                 state.startTimer(
                     TimerConfig(
@@ -44,6 +47,11 @@ fun MainScreen(state: AppState) {
             if (settings.mode == PracticeMode.BLACKOUT_PRACTICE) {
                 state.startBlackout(settings.blackoutDuration)
                 isBlackoutConfig = true
+                state.startTimer(
+                    TimerConfig(
+                        duration = settings.blackoutDuration,
+                    )
+                )
             } else {
                 isBlackoutConfig = false
             }
@@ -72,13 +80,34 @@ fun MainScreen(state: AppState) {
                                 .pointerInput(Unit) {
                                     detectTapGestures(
                                         onPress = {
-                                            state.isBlackedOut = false
-                                            awaitRelease()
-                                            state.isBlackedOut = true
+                                            if (state.isBlackedOut) {
+                                                state.isBlackedOut = false
+                                                awaitRelease()
+                                                state.isBlackedOut = true
+                                            }
                                         }
                                     )
                                 }.alpha(if (state.isBlackedOut) 1f else 0f),
                         ) {
+                            state.blackoutPracticeTimeRemaining?.let { timeLeft ->
+                                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(
+                                            text = "$timeLeft",
+                                            color = if (state.isBlackedOut) Color.White else Color.Black,
+                                            fontSize = 72.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = "seconds remaining",
+                                            color = if (state.isBlackedOut) Color.White else Color.Black,
+                                            fontSize = 16.sp
+                                        )
+                                    }
+                                }
+                            }
+
                         }
                     }
 
@@ -145,7 +174,7 @@ fun MainScreen(state: AppState) {
                 }
 
                 AnimatedVisibility(
-                    visible = state.isTimerActive,
+                    visible = state.isTimerActive && !state.onBlackout,
                     enter = slideInHorizontally { it } + fadeIn(),
                     exit = slideOutHorizontally { it } + fadeOut(),
                     modifier = Modifier
@@ -155,7 +184,11 @@ fun MainScreen(state: AppState) {
                         config = state.timerConfig!!,
                         imageChangeCount = state.imageChangeCounter,
                         onTimerComplete = {
-                            state.onNextImage()
+                            if (!isBlackoutConfig) {
+                                state.onNextImage()
+                            } else {
+                                state.stopTimer()
+                            }
                         }
                     )
                 }
