@@ -3,7 +3,6 @@ package com.artscry.model
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.artscry.ui.components.TimerConfig
 import com.artscry.util.FileUtils
 import com.artscry.util.ImageCache
 import kotlinx.coroutines.*
@@ -20,7 +19,12 @@ class AppState {
     var imageChangeCounter by mutableStateOf(0)
 
     var isBlackedOut by mutableStateOf(false)
+    var onBlackout by mutableStateOf(false)
     var blackoutTimer: Job? = null
+    var blackoutTimeRemaining by mutableStateOf<Int?>(null)
+
+    var blackoutPracticeTimer: Job? = null
+    var blackoutPracticeTimeRemaining by mutableStateOf<Int?>(null)
 
     fun loadImages(folder: String, limit: Int? = null) {
         val allImages = FileUtils.findImageFiles(File(folder))
@@ -58,9 +62,9 @@ class AppState {
             imageChangeCounter++
             clearBlackout()
 
-            // If in blackout mode, start timer for new image
             viewerSettings?.let { settings ->
                 if (settings.mode == PracticeMode.BLACKOUT_PRACTICE) {
+                    isTimerActive = true
                     startBlackout(settings.blackoutDuration)
                 }
             }
@@ -74,17 +78,50 @@ class AppState {
         }
     }
 
+
     fun startBlackout(duration: Int) {
-        scope.launch {
-            delay(duration * 1000L)
+        blackoutTimeRemaining = duration
+        blackoutTimer?.cancel()
+        blackoutTimer = scope.launch {
+            while (blackoutTimeRemaining!! > 0) {
+                delay(1000L)
+                blackoutTimeRemaining = blackoutTimeRemaining!! - 1
+            }
             isBlackedOut = true
+
+            delay(1000L)
+            viewerSettings?.let { settings ->
+                if (settings.practiceTimerEnabled) {
+                    onBlackout = true
+                    startBlackoutPracticeTimer(settings.practiceTimerDuration)
+                }
+            }
+        }
+    }
+
+    private fun startBlackoutPracticeTimer(duration: Int) {
+        blackoutPracticeTimeRemaining = duration
+        blackoutPracticeTimer?.cancel()
+        blackoutPracticeTimer = scope.launch {
+            while (blackoutPracticeTimeRemaining!! > 0) {
+                delay(1000L)
+                blackoutPracticeTimeRemaining = blackoutPracticeTimeRemaining!! - 1
+
+                if (blackoutPracticeTimeRemaining == 0) {
+                    onNextImage()
+                    break
+                }
+            }
         }
     }
 
     private fun clearBlackout() {
         isBlackedOut = false
+        onBlackout = false
         blackoutTimer?.cancel()
         blackoutTimer = null
+        blackoutPracticeTimer?.cancel()
+        blackoutPracticeTimer = null
+        blackoutPracticeTimeRemaining = null
     }
-
 }

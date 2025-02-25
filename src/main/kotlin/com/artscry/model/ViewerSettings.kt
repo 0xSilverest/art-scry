@@ -11,6 +11,9 @@ data class ViewerSettings(
     val blackoutEnabled: Boolean = false,
     val blackoutDuration: Int = 60,
 
+    val practiceTimerEnabled: Boolean = false,
+    val practiceTimerDuration: Int = 300,
+
     val randomMode: Boolean = false,
     val hideArrowsInTimer: Boolean = false,
     val imageLimit: Int? = null,
