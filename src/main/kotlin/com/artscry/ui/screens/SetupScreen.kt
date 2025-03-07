@@ -1,4 +1,4 @@
-package com.artscry.ui.components
+package com.artscry.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.*
@@ -16,21 +16,35 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.artscry.model.*
+import com.artscry.core.domain.model.*
+import com.artscry.data.repository.DbRepository
+import com.artscry.ui.components.*
 import com.artscry.ui.theme.ThemeState
 import com.artscry.ui.theme.artScryColors
+import kotlinx.coroutines.launch
 import java.io.File
 import java.util.*
 
 @Composable
-fun SetupScreen(onStart: (ViewerSettings) -> Unit) {
+fun SetupScreen(
+    imageRepository: DbRepository,
+    onStart: (ViewerSettings) -> Unit
+) {
+    val scope = rememberCoroutineScope()
+
+    var showDirectoryScanner by remember { mutableStateOf(false) }
+    var showTagBasedLoader by remember { mutableStateOf(false) }
+
     var selectedMode by remember { mutableStateOf<PracticeMode?>(null) }
     var folderPath by remember { mutableStateOf<String?>(null) }
     var showModeMenu by remember { mutableStateOf(false) }
     var showFolderSelector by remember { mutableStateOf(false) }
+    var showTagReviewDialog by remember { mutableStateOf(false) }
+    var selectedTags by remember { mutableStateOf<List<Tag>>(emptyList()) }
 
     val scrollState = rememberScrollState()
 
+    var selectedImages by remember { mutableStateOf<List<ImageReference>>(emptyList()) }
     var timedConfig by remember { mutableStateOf(TimedSketchingConfig()) }
     var blackoutConfig by remember { mutableStateOf(BlackoutConfig()) }
     var freeViewConfig by remember { mutableStateOf(FreeViewConfig()) }
@@ -77,7 +91,6 @@ fun SetupScreen(onStart: (ViewerSettings) -> Unit) {
                     )
                 }
             }
-
             Text(
                 "Setup",
                 style = MaterialTheme.typography.h5,
@@ -187,12 +200,52 @@ fun SetupScreen(onStart: (ViewerSettings) -> Unit) {
                                         ),
                                         elevation = ButtonDefaults.elevation()
                                     ) {
-                                    Text("Change")
+                                        Text("Change")
+                                    }
                                 }
+                            }
 
+                            if (selectedTags.isNotEmpty()) {
+                                Spacer(Modifier.height(8.dp))
+                                Text(
+                                    "Auto-detected Tags:",
+                                    style = MaterialTheme.typography.subtitle2
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                FlowRow(
+                                    mainAxisSpacing = 8,
+                                    crossAxisSpacing = 8
+                                ) {
+                                    selectedTags.forEach { tag ->
+                                        TagChip(tag = tag, selected = true)
+                                    }
+                                }
+                                Spacer(Modifier.height(4.dp))
+                                TextButton(onClick = { showTagReviewDialog = true }) {
+                                    Text("Edit Tags")
                                 }
                             }
                         }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = { showDirectoryScanner = true },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Scan Directory Tree")
+                            }
+
+                            OutlinedButton(
+                                onClick = { showTagBasedLoader = true },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Load By Tags")
+                            }
+                        }
+
                     }
 
                     Divider()
@@ -364,6 +417,8 @@ fun SetupScreen(onStart: (ViewerSettings) -> Unit) {
                                 ViewerSettings(
                                     folderPath = path,
                                     mode = PracticeMode.TIMED_SKETCHING,
+                                    tags = selectedTags,
+                                    preloadedImages = if (path == "Tagged Images") selectedImages else null,
                                     timerEnabled = true,
                                     timerDuration = timedConfig.duration,
                                     hideArrowsInTimer = timedConfig.hideArrows,
@@ -376,6 +431,8 @@ fun SetupScreen(onStart: (ViewerSettings) -> Unit) {
                                 ViewerSettings(
                                     folderPath = path,
                                     mode = PracticeMode.BLACKOUT_PRACTICE,
+                                    tags = selectedTags,
+                                    preloadedImages = if (path == "Tagged Images") selectedImages else null,
                                     blackoutEnabled = true,
                                     blackoutDuration = blackoutConfig.duration,
                                     practiceTimerEnabled = blackoutConfig.practiceTimerEnabled,
@@ -389,6 +446,8 @@ fun SetupScreen(onStart: (ViewerSettings) -> Unit) {
                                 ViewerSettings(
                                     folderPath = path,
                                     mode = PracticeMode.FREE_VIEWING,
+                                    tags = selectedTags,
+                                    preloadedImages = if (path == "Tagged Images") selectedImages else null,
                                     randomMode = freeViewConfig.randomMode,
                                     imageLimit = freeViewConfig.imageLimit
                                 )
@@ -412,12 +471,34 @@ fun SetupScreen(onStart: (ViewerSettings) -> Unit) {
                 )
             }
         }
+
+
+        if (showDirectoryScanner) {
+            DirectoryScannerDialog(
+                repository = imageRepository,
+                onScanComplete = {
+                    showDirectoryScanner = false
+                },
+                onDismiss = { showDirectoryScanner = false }
+            )
+        }
+
+        if (showTagBasedLoader) {
+            TagBasedImageLoader(
+                repository = imageRepository,
+                onImagesLoaded = { images ->
+                    folderPath = "Tagged Images"
+                    selectedImages = images
+                    selectedMode = PracticeMode.FREE_VIEWING
+                },
+                onDismiss = { showTagBasedLoader = false }
+            )
+        }
+
         if (showFolderSelector) {
             FolderSelector { path ->
                 folderPath = path
-                showFolderSelector = false
             }
         }
-
     }
 }

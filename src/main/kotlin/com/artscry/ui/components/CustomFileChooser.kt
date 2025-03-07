@@ -46,15 +46,16 @@ fun CustomFileChooser(
     var showSearchBar by remember { mutableStateOf(false) }
 
     val focusRequester = remember { FocusRequester() }
-    val searchFocusRequester = remember { FocusRequester() }  // Add search focus requester
+    val searchFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
+        println("CUSTOM FILE CHOOSER LAUNCHED")
         focusRequester.requestFocus()
     }
 
     LaunchedEffect(showSearchBar) {
         if (showSearchBar) {
-            delay(100) // Small delay to ensure TextField is composed
+            delay(100)
             try {
                 searchFocusRequester.requestFocus()
             } catch (e: Exception) {
@@ -210,8 +211,8 @@ fun CustomFileChooser(
                     Button(
                         onClick = {
                             val pathToUse = selectedFolder ?: currentPath
+                            println("SELECTED PATH: $pathToUse")
                             onFolderSelected(pathToUse.toString())
-                            onDismiss()
                         },
                         enabled = true
                     ) {

@@ -35,7 +35,7 @@ class ImageCache(
                             }
                         } catch (e: Exception) {
                             if (e !is CancellationException) {
-                                println("Failed to preload image: ${e.message}")
+                                println("Failed to preload image $path: ${e.message}")
                             }
                         } finally {
                             loadingJobs.remove(path)
@@ -76,7 +76,7 @@ class ImageCache(
     }
 
     fun preloadAround(currentPath: String, paths: List<String>, preloadCount: Int = 2) {
-        scope.launch(Dispatchers.Default) {  // Changed from implicit Main to Default
+        scope.launch(Dispatchers.Default) {
             try {
                 mutex.withLock {
                     loadingJobs.forEach { (path, job) ->

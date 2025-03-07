@@ -2,12 +2,14 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
     kotlin("jvm")
+    kotlin("plugin.serialization") version "2.1.0"
     id("org.jetbrains.compose")
     id("org.jetbrains.kotlin.plugin.compose")
+        id("com.google.devtools.ksp") version "2.0.21-1.0.27" apply false
 }
 
 group = "com.silverest"
-version = "1.0-SNAPSHOT"
+version = "1.0-SNAPSHOTnishh"
 
 repositories {
     mavenCentral()
@@ -22,7 +24,12 @@ dependencies {
     // With compose.desktop.common you will also lose @Preview functionality
     implementation(compose.desktop.currentOs)
     implementation(compose.material)
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+
+    implementation("org.jetbrains.exposed:exposed-core:0.41.1")
+    implementation("org.jetbrains.exposed:exposed-dao:0.41.1")
+    implementation("org.jetbrains.exposed:exposed-jdbc:0.41.1")
+    implementation("org.xerial:sqlite-jdbc:3.41.2.2")
 }
 
 compose.desktop {

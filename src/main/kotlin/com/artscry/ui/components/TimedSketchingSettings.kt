@@ -6,13 +6,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.artscry.model.TimedSketchingConfig
+import com.artscry.core.domain.model.TimedSketchingConfig
 
 @Composable
 fun TimedSketchingSettings(
-    onSettingsChange: (TimedSketchingConfig) -> Unit = {}
+    onSettingsChange: (com.artscry.core.domain.model.TimedSketchingConfig) -> Unit = {}
 ) {
-    var config by remember { mutableStateOf(TimedSketchingConfig()) }
+    var config by remember { mutableStateOf(com.artscry.core.domain.model.TimedSketchingConfig()) }
     var durationStr by remember { mutableStateOf("60") }
     var imageLimitStr by remember { mutableStateOf("") }
 
@@ -81,7 +81,7 @@ fun TimedSketchingSettings(
                     config = it
                     onSettingsChange(it)
                 },
-                updateConfig = TimedSketchingConfig::updateRandomMode
+                updateConfig = com.artscry.core.domain.model.TimedSketchingConfig::updateRandomMode
             )
 
         }

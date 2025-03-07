@@ -7,52 +7,55 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
-import com.artscry.model.AppState
+import com.artscry.data.database.ArtScryDatabase
+import com.artscry.core.common.AppState
 import com.artscry.ui.screens.MainScreen
 import com.artscry.ui.theme.ArtScryTheme
 
-fun main() = application {
-    val state = remember { AppState() }
+fun main() {
+    ArtScryDatabase.initialize()
 
-    val windowState = rememberWindowState(
-        placement = WindowPlacement.Floating,
-        position = WindowPosition(0.dp, 0.dp),
-        width = 800.dp,
-        height = 600.dp
-    )
+    application {
+        val state = remember { AppState() }
 
-    Window(
-        onCloseRequest = ::exitApplication,
-        state = windowState,
-        title = "ArtScry",
-        undecorated = false,
-        transparent = false,
-        alwaysOnTop = state.isAlwaysOnTop,
-        onPreviewKeyEvent = {
-            when {
+        val windowState = rememberWindowState(
+            placement = WindowPlacement.Floating,
+            position = WindowPosition(0.dp, 0.dp),
+            width = 800.dp,
+            height = 600.dp
+        )
 
-                (setOf(Key.DirectionRight, Key.DirectionUp, Key.L)
-                    .contains(it.key) && it.type == KeyEventType.KeyDown) -> {
-                    if (!state.isBlackedOut) {
-                        state.onNextImage()
+        Window(
+            onCloseRequest = ::exitApplication,
+            state = windowState,
+            title = "ArtScry",
+            undecorated = false,
+            transparent = false,
+            alwaysOnTop = state.isAlwaysOnTop,
+            onPreviewKeyEvent = {
+                when {
+                    (setOf(Key.DirectionRight, Key.DirectionUp, Key.L)
+                        .contains(it.key) && it.type == KeyEventType.KeyDown) -> {
+                        if (!state.isBlackedOut) {
+                            state.onNextImage()
+                        }
+                        true
                     }
-                    true
+
+                    (setOf(
+                        Key.DirectionLeft, Key.DirectionDown, Key.H
+                    ).contains(it.key) && it.type == KeyEventType.KeyDown && !state.isTimerActive) -> {
+                        state.onPreviousImage()
+                        true
+                    }
+
+                    else -> false
                 }
-
-
-                (setOf(
-                    Key.DirectionLeft, Key.DirectionDown, Key.H
-                ).contains(it.key) && it.type == KeyEventType.KeyDown && !state.isTimerActive) -> {
-                    state.onPreviousImage()
-                    true
-                }
-
-                else -> false
             }
-        }
-    ) {
-        ArtScryTheme {
-            MainScreen(state)
+        ) {
+            ArtScryTheme {
+                MainScreen(state)
+            }
         }
     }
 }

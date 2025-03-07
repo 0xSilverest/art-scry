@@ -1,4 +1,4 @@
-package com.artscry.model
+package com.artscry.core.domain.model
 
 data class ImageReference (
     val path: String,

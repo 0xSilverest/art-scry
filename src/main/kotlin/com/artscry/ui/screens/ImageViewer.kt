@@ -1,4 +1,4 @@
-package com.artscry.ui.components
+package com.artscry.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -23,7 +23,8 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import com.artscry.model.ImageReference
+import com.artscry.core.domain.model.ImageReference
+import com.artscry.ui.components.ProgressNumber
 import com.artscry.util.ImageCache
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -76,7 +77,6 @@ fun ImageViewer(
     LaunchedEffect(currentImage) {
         if (currentImage == null) return@LaunchedEffect
 
-        // Cancel any previous loading job
         currentLoadingJob?.cancel()
 
         isLoading = true
@@ -174,7 +174,6 @@ fun ImageViewer(
                             currentLoadingJob?.cancel()
                             currentLoadingJob = null
                             isLoading = true
-                            // Trigger a reload by incrementing a key
                             retryTrigger++
                         }) {
                             Text("Retry")

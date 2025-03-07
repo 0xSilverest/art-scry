@@ -6,13 +6,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.artscry.model.BlackoutConfig
+import com.artscry.core.domain.model.BlackoutConfig
 
 @Composable
 fun BlackoutSettings(
-    onSettingsChange: (BlackoutConfig) -> Unit = {}
+    onSettingsChange: (com.artscry.core.domain.model.BlackoutConfig) -> Unit = {}
 ) {
-    var config by remember { mutableStateOf(BlackoutConfig()) }
+    var config by remember { mutableStateOf(com.artscry.core.domain.model.BlackoutConfig()) }
     var blackoutDurationStr by remember { mutableStateOf("60") }
     var practiceTimerDurationStr by remember { mutableStateOf("300") }
     var imageLimitStr by remember { mutableStateOf("") }
@@ -78,7 +78,7 @@ fun BlackoutSettings(
                     config = it
                     onSettingsChange(it)
                 },
-                updateConfig = BlackoutConfig::updateRandomMode
+                updateConfig = com.artscry.core.domain.model.BlackoutConfig::updateRandomMode
             )
         }
     }

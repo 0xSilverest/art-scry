@@ -1,6 +1,6 @@
 package com.artscry.util
 
-import com.artscry.model.ImageReference
+import com.artscry.core.domain.model.ImageReference
 import java.io.File
 
 object FileUtils {

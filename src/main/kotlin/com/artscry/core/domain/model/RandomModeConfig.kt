@@ -1,4 +1,4 @@
-package com.artscry.model
+package com.artscry.core.domain.model
 
 interface RandomModeConfig {
     val randomMode: Boolean

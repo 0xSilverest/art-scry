@@ -8,10 +8,10 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.artscry.model.RandomModeConfig
+import com.artscry.core.domain.model.RandomModeConfig
 
 @Composable
-fun <T : RandomModeConfig> RandomModeSettings(
+fun <T : com.artscry.core.domain.model.RandomModeConfig> RandomModeSettings(
     config: T,
     imageLimitStr: String,
     onImageLimitChange: (String) -> Unit,
