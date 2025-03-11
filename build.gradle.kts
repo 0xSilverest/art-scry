@@ -26,6 +26,11 @@ dependencies {
     implementation(compose.material)
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
 
+    implementation("edu.stanford.nlp:stanford-corenlp:4.5.4")
+    implementation("edu.stanford.nlp:stanford-corenlp:4.5.4:models")
+
+    implementation("org.yaml:snakeyaml:1.30")
+
     implementation("org.jetbrains.exposed:exposed-core:0.41.1")
     implementation("org.jetbrains.exposed:exposed-dao:0.41.1")
     implementation("org.jetbrains.exposed:exposed-jdbc:0.41.1")

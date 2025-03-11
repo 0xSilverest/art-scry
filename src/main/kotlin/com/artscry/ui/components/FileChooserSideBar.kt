@@ -32,7 +32,6 @@ fun FileChooserSidebar(
         border = BorderStroke(1.dp, MaterialTheme.colors.onSurface.copy(alpha = 0.1f))
     ) {
         Column(modifier = Modifier.padding(8.dp)) {
-            // Favorites section
             if (favorites.isNotEmpty()) {
                 FavoritesSection(
                     favorites = favorites,

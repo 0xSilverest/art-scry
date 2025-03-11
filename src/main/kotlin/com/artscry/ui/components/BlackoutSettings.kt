@@ -10,9 +10,9 @@ import com.artscry.core.domain.model.BlackoutConfig
 
 @Composable
 fun BlackoutSettings(
-    onSettingsChange: (com.artscry.core.domain.model.BlackoutConfig) -> Unit = {}
+    onSettingsChange: (BlackoutConfig) -> Unit = {}
 ) {
-    var config by remember { mutableStateOf(com.artscry.core.domain.model.BlackoutConfig()) }
+    var config by remember { mutableStateOf(BlackoutConfig()) }
     var blackoutDurationStr by remember { mutableStateOf("60") }
     var practiceTimerDurationStr by remember { mutableStateOf("300") }
     var imageLimitStr by remember { mutableStateOf("") }
@@ -78,7 +78,7 @@ fun BlackoutSettings(
                     config = it
                     onSettingsChange(it)
                 },
-                updateConfig = com.artscry.core.domain.model.BlackoutConfig::updateRandomMode
+                updateConfig = BlackoutConfig::updateRandomMode
             )
         }
     }

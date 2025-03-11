@@ -25,9 +25,9 @@ import com.artscry.core.domain.model.Tag
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun TagSelectorDialog(
-    allTags: List<com.artscry.core.domain.model.Tag>,
-    selectedTags: List<com.artscry.core.domain.model.Tag>,
-    onTagSelected: (com.artscry.core.domain.model.Tag) -> Unit,
+    allTags: List<Tag>,
+    selectedTags: List<Tag>,
+    onTagSelected: (Tag) -> Unit,
     onDismiss: () -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -84,7 +84,6 @@ fun TagSelectorDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Category filters
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(vertical = 8.dp)

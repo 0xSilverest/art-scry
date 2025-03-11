@@ -3,30 +3,15 @@ package com.artscry.util
 import com.artscry.core.domain.model.ImageReference
 import com.artscry.core.domain.model.Tag
 import com.artscry.data.repository.DbRepository
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.system.measureTimeMillis
 
 object DirectoryScanner {
     private val IMAGE_EXTENSIONS = setOf("jpg", "jpeg", "png", "gif", "bmp")
-
-    private val STOP_WORDS = setOf(
-        // Common words
-        "the", "and", "for", "with", "from", "these", "those", "this", "that",
-        "set", "sets", "collection", "collections", "pack", "packs",
-        "ref", "refs", "reference", "references",
-        // Common folder naming patterns
-        "part", "parts", "vol", "volume", "volumes", "chapter", "chapters", "series",
-        "section", "sections", "page", "pages", "bundle", "bundles", "art", "fully",
-        "images",
-        // Qualifiers
-        "new", "old", "final", "latest", "high", "low", "res", "resolution",
-        // Roman numerals
-        "i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x",
-        "xi", "xii", "xiii", "xiv", "xv"
-    )
 
     private val numericPrefixRegex = Regex("\\d+")
     private val separatorsRegex = Regex("[-_/+\\\\()]")
@@ -35,11 +20,15 @@ object DirectoryScanner {
 
     private val dbMutex = Mutex()
 
+    private val config by lazy { TagConfigLoader.getConfig() }
+
     suspend fun scanDirectoryRecursively(
         rootDir: String,
         repository: DbRepository,
-        progressCallback: (String, Int, Int) -> Unit
-    ) = withContext(Dispatchers.IO) {
+        progressCallback: (String, Int, Int) -> Unit,
+        basePathToIgnore: String? = null,
+        selectedTags: List<Tag>? = null
+    )  = withContext(Dispatchers.IO) {
         println("DS: Starting scan of directory: $rootDir")
         val overallTime = measureTimeMillis {
             try {
@@ -62,18 +51,30 @@ object DirectoryScanner {
                     return@withContext
                 }
 
-                val directoryToTags = prepareDirectoryTags(allImageFiles)
-                val uniqueTags = directoryToTags.values.flatten().distinct()
-                println("DS: Found ${directoryToTags.size} unique directories with ${uniqueTags.size} tags")
+                val imageToTagsMap = prepareHierarchicalTags(rootDirectory, allImageFiles, basePathToIgnore)
 
-                val tagCache = preCreateAllTags(uniqueTags, repository)
+                val filteredImageToTagsMap = if (selectedTags != null) {
+                    val selectedTagNames = selectedTags.map { it.name }.toSet()
+                    println("DS: Filtering to ${selectedTagNames.size} selected tags")
+
+                    imageToTagsMap.mapValues { (_, tags) ->
+                        tags.filter { it in selectedTagNames }
+                    }
+                } else {
+                    imageToTagsMap
+                }
+
+                val allTagNames = filteredImageToTagsMap.values.flatten().distinct()
+                println("DS: Generated ${allTagNames.size} unique hierarchical tags")
+
+                val tagCache = preCreateAllTags(allTagNames, repository)
                 println("DS: Pre-created ${tagCache.size} unique tags")
 
                 val imageEntityCache = createAllImageEntries(allImageFiles, repository)
                 println("DS: Created ${imageEntityCache.size} image entries")
 
                 val processedImages = createAllTagLinks(
-                    allImageFiles, imageEntityCache, tagCache, directoryToTags,
+                    allImageFiles, imageEntityCache, tagCache, filteredImageToTagsMap,
                     repository, totalImages, progressCallback
                 )
 
@@ -86,17 +87,44 @@ object DirectoryScanner {
         println("DS: Total scan completed in ${overallTime}ms")
     }
 
-    private fun prepareDirectoryTags(imageFiles: List<File>): Map<String, List<String>> {
-        val directoryTags = HashMap<String, List<String>>()
+    private fun prepareHierarchicalTags(rootDir: File, imageFiles: List<File>, basePathToIgnore: String? = null): Map<String, List<String>> {
+        val imageToTagsMap = HashMap<String, List<String>>()
+        val rootPath = rootDir.absolutePath
 
-        imageFiles.mapNotNull { it.parentFile?.absolutePath }
-            .distinct()
-            .forEach { dirPath ->
-                val dirName = File(dirPath).name
-                directoryTags[dirPath] = extractSmartTags(dirName)
+        val basePath = basePathToIgnore?.let { File(it).absolutePath }
+        val useBasePath = basePath != null
+
+        println("DS: Using base path filter: $basePath")
+
+        for (imageFile in imageFiles) {
+            val tagsList = mutableListOf<String>()
+
+            var currentDir = imageFile.parentFile
+            var reachedBasePath = false
+
+            while (currentDir != null && currentDir.absolutePath.startsWith(rootPath)) {
+                if (useBasePath && !reachedBasePath) {
+                    if (currentDir.absolutePath.equals(basePath, ignoreCase = true) ||
+                        currentDir.absolutePath.startsWith("$basePath${File.separator}")) {
+                        reachedBasePath = true
+                    }
+                }
+
+                if (!useBasePath || reachedBasePath) {
+                    val dirTags = extractSmartTags(currentDir.name)
+                    tagsList.addAll(dirTags)
+                }
+
+                currentDir = currentDir.parentFile
             }
 
-        return directoryTags
+            val uniqueTags = tagsList.distinct()
+            imageToTagsMap[imageFile.absolutePath] = uniqueTags
+        }
+
+        imageToTagsMap.values.flatten().distinct().forEach { tag -> println("DS: Found tag: $tag") }
+
+        return imageToTagsMap
     }
 
     private suspend fun preCreateAllTags(
@@ -116,7 +144,7 @@ object DirectoryScanner {
 
                     val tag = existingTag ?: repository.createTag(
                         name = tagName,
-                        category = guessCategoryForTag(tagName),
+                        category = ArtTagNormalizer.getCategoryForTag(tagName) ?: guessCategoryForTag(tagName),
                     )
 
                     tagCache[tagName] = tag
@@ -166,7 +194,7 @@ object DirectoryScanner {
         imageFiles: List<File>,
         imageEntityCache: Map<String, String>,
         tagCache: Map<String, Tag>,
-        directoryToTags: Map<String, List<String>>,
+        imageToTagsMap: Map<String, List<String>>,
         repository: DbRepository,
         totalImages: Int,
         progressCallback: (String, Int, Int) -> Unit
@@ -177,8 +205,7 @@ object DirectoryScanner {
             val imagePath = imageFile.absolutePath
             val imageId = imageEntityCache[imagePath] ?: continue
 
-            val parentDirPath = imageFile.parentFile?.absolutePath ?: continue
-            val tagNames = directoryToTags[parentDirPath] ?: continue
+            val tagNames = imageToTagsMap[imagePath] ?: continue
 
             for (tagName in tagNames) {
                 val tag = tagCache[tagName] ?: continue
@@ -240,13 +267,73 @@ object DirectoryScanner {
             .split(" ")
             .filter { word ->
                 word.isNotBlank() &&
-                        word.lowercase() !in STOP_WORDS &&
+                        !config.shouldIgnoreWord(word) &&
                         !word.all { it.isDigit() } &&
                         (word.length >= 3 || word in setOf("3d", "2d", "ai"))
             }
-            .map { word ->
-                word.replaceFirstChar { it.uppercase() }
+            .mapNotNull { word ->
+                val normalized = ArtTagNormalizer.normalizeWord(word)
+                if (normalized.isBlank()) null else normalized
             }
+    }
+
+    suspend fun detectTagsInDirectory(
+        rootDir: String,
+        basePathToIgnore: String? = null,
+        progressCallback: (String, Int, Int) -> Unit
+    ): List<Tag> = withContext(Dispatchers.IO) {
+        println("DS: Analyzing directory for tags: $rootDir")
+        try {
+            val rootDirectory = File(rootDir)
+            if (!rootDirectory.isDirectory) {
+                println("DS: Error: Not a directory: $rootDir")
+                return@withContext emptyList()
+            }
+
+            val allImageFiles = mutableListOf<File>()
+            findAllImagesRecursively(rootDirectory, allImageFiles)
+
+            val totalImages = allImageFiles.size
+            println("DS: Found $totalImages image files")
+
+            if (totalImages == 0) {
+                return@withContext emptyList()
+            }
+
+            progressCallback("Analyzing directory structure...", 0, 100)
+
+            if (basePathToIgnore != null) {
+                println("DS: Using base path filter: $basePathToIgnore")
+            }
+
+            val sampleSize = minOf(allImageFiles.size, 1000)
+            val sampleFiles = if (allImageFiles.size > sampleSize) {
+                allImageFiles.shuffled().take(sampleSize)
+            } else {
+                allImageFiles
+            }
+
+            val imageToTagsMap = prepareHierarchicalTags(rootDirectory, sampleFiles, basePathToIgnore)
+            val allTagNames = imageToTagsMap.values.flatten().distinct().sorted()
+
+            progressCallback("Found ${allTagNames.size} unique tags", 50, 100)
+            println("DS: Found ${allTagNames.size} unique tags")
+
+            val tags = allTagNames.map { tagName ->
+                Tag(
+                    name = tagName,
+                    category = ArtTagNormalizer.getCategoryForTag(tagName) ?: guessCategoryForTag(tagName)
+                )
+            }
+
+            progressCallback("Analysis complete", 100, 100)
+            return@withContext tags
+
+        } catch (e: Exception) {
+            println("DS: Error analyzing directory: ${e.message}")
+            e.printStackTrace()
+            return@withContext emptyList()
+        }
     }
 
     private fun guessCategoryForTag(tagName: String): String? {
@@ -259,7 +346,6 @@ object DirectoryScanner {
             in setOf("hands", "feet", "legs", "arms", "torso", "chest", "back") -> "body_part"
             in setOf("fantasy", "realistic", "cartoon", "anime", "comic", "stylized") -> "style"
             in setOf("nude", "naked", "clothed", "dressed", "underwear", "lingerie") -> "clothing"
-            in setOf("color", "grayscale", "bw", "monochrome", "sepia") -> "coloring"
             else -> null
         }
     }

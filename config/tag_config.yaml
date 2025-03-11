@@ -1,0 +1,262 @@
+# Art Reference Tagging Configuration
+
+# Words to ignore when extracting tags
+ignore_words:
+  - the
+  - and
+  - for
+  - with
+  - from
+  - these
+  - those
+  - this
+  - that
+  - set
+  - sets
+  - collection
+  - collections
+  - pack
+  - packs
+  - ref
+  - refs
+  - reference
+  - references
+  - artstation
+  - macosx
+  - grafit
+  - picture
+  - studio
+  - essential
+  - essenstial
+  - inktober
+  - jpeg
+  - noai
+  - bonus
+  - free
+  - code
+  - obscura
+  - different
+  - complex
+  - part
+  - parts
+  - vol
+  - volume
+  - volumes
+  - chapter
+  - chapters
+  - series
+  - section
+  - sections
+  - page
+  - pages
+  - bundle
+  - bundles
+  - art
+  - fully
+  - images
+  - edit
+  - alternative
+  - special
+  - study
+  - variation
+  - new
+  - old
+  - final
+  - latest
+  - high
+  - low
+  - res
+  - resolution
+  - i
+  - ii
+  - iii
+  - iv
+  - v
+  - vi
+  - vii
+  - viii
+  - ix
+  - x
+  - xi
+  - xii
+  - xiii
+  - xiv
+  - xv
+  - aryiel
+  - without
+  - draw
+  - daily
+  - artist
+  - mels
+  - mneyan
+  - gif
+  - pre
+  - raphaelit
+  - essensti
+  - setup
+  - differ
+  - everyday
+  - project
+  - refer
+  - drawing
+  - artstat
+
+# Tag transformations to unify related concepts
+tag_transformations:
+  # Body parts
+  arm: arms
+  leg: legs
+  hand: hands
+  foot: feet
+  eye: eyes
+  lip: lips
+  finger: fingers
+  shoulder: shoulders
+  hip: hips
+  knee: knees
+  elbow: elbows
+
+  # Gender/people
+  femme: female
+  woman: female
+  wamen: female
+  man: male
+  lady: female
+  girl: female
+  boy: male
+  guy: male
+
+  # Clothing
+  cloth: clothing
+  dressed: clothed
+  naked: nude
+  nudity: nude
+
+  # Actions
+  stand: standing
+  sit: sitting
+  walk: walking
+  run: running
+  kneel: kneeling
+  jump: jumping
+  dance: dancing
+  pose: poses
+
+  # Types
+  portrait: portraits
+  sketch: sketches
+  paint: painting
+  draw: drawing
+
+  # Weapons
+  katana: katanas
+  sword: swords
+  gun: guns
+  knife: knives
+  spear: spears
+  weapon: weapons
+
+  # Styles/attributes
+  anatom: anatomy
+  realistic: realism
+  fantasi: fantasy
+  beautiful: beauty
+
+  # Other normalizations
+  turnaround: rotation
+  turn: rotation
+  swoard: sword
+  nunchuck: nunchaku
+  emot: emotion
+  fullbody: body
+
+# Category assignments for tags
+category_mappings:
+  gender:
+    - male
+    - female
+    - woman
+    - man
+    - girl
+    - boy
+    - lady
+    - guy
+
+  pose:
+    - poses
+    - standing
+    - sitting
+    - laying
+    - action
+    - walking
+    - running
+    - jumping
+    - dancing
+    - kneeling
+    - rotation
+    - turnaround
+
+  type:
+    - portrait
+    - portraits
+    - figure
+    - anatomy
+    - body
+    - face
+    - head
+    - sketch
+    - drawing
+    - painting
+
+  body_part:
+    - hands
+    - feet
+    - legs
+    - arms
+    - torso
+    - chest
+    - back
+    - head
+    - face
+    - eyes
+    - nose
+    - mouth
+    - lips
+    - shoulders
+    - knees
+    - elbows
+    - fingers
+
+  style:
+    - fantasy
+    - realistic
+    - cartoon
+    - anime
+    - comic
+    - stylized
+    - beauty
+    - beautiful
+
+  clothing:
+    - nude
+    - clothed
+    - dressed
+    - underwear
+    - lingerie
+    - clothing
+
+  weapons:
+    - sword
+    - swords
+    - knife
+    - knives
+    - gun
+    - guns
+    - spear
+    - weapon
+    - weapons
+    - katana
+    - katanas
+    - nunchaku
+    - staff
+    - hammer
