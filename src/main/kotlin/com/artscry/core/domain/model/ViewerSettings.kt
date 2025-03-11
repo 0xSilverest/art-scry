@@ -5,7 +5,7 @@ data class ViewerSettings(
     val mode: PracticeMode,
     val preloadedImages: List<ImageReference>? = null,
 
-    val tags: List<com.artscry.core.domain.model.Tag> = emptyList(),
+    val tags: List<Tag> = emptyList(),
 
     val timerEnabled: Boolean = false,
     val timerDuration: Int = 60,

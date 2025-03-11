@@ -21,6 +21,7 @@ import com.artscry.data.repository.DbRepository
 import com.artscry.ui.components.*
 import com.artscry.ui.theme.ThemeState
 import com.artscry.ui.theme.artScryColors
+import com.artscry.util.PreferencesManager
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.*
@@ -39,6 +40,7 @@ fun SetupScreen(
     var folderPath by remember { mutableStateOf<String?>(null) }
     var showModeMenu by remember { mutableStateOf(false) }
     var showFolderSelector by remember { mutableStateOf(false) }
+    var showChooser by remember { mutableStateOf(false) }
     var showTagReviewDialog by remember { mutableStateOf(false) }
     var selectedTags by remember { mutableStateOf<List<Tag>>(emptyList()) }
 
@@ -192,7 +194,7 @@ fun SetupScreen(
 
                                     Button(
                                         onClick = {
-                                            showFolderSelector = true
+                                            showChooser = true
                                         },
                                         colors = ButtonDefaults.buttonColors(
                                             backgroundColor = MaterialTheme.colors.surface,
@@ -499,6 +501,18 @@ fun SetupScreen(
             FolderSelector { path ->
                 folderPath = path
             }
+        }
+
+        if (showChooser) {
+            CustomFileChooser(
+                initialDirectory = PreferencesManager.getLastFolder(),
+                onFolderSelected = { path ->
+                    PreferencesManager.setLastFolder(path)
+                    folderPath = path
+                    showChooser = false
+                },
+                onDismiss = { showChooser = false }
+            )
         }
     }
 }

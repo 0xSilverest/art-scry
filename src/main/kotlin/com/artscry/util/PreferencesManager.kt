@@ -1,10 +1,11 @@
 package com.artscry.util
 
-import kotlinx.serialization.encodeToString
+import com.artscry.core.domain.model.FavoriteLocation
 import kotlinx.serialization.json.Json
 import java.util.prefs.Preferences
 
 object PreferencesManager {
+    private const val FAVORITES_KEY = "favorites"
     private const val LAST_FOLDER_KEY = "last_folder"
     private const val RECENT_FOLDERS_KEY = "recent_folders"
     private const val MAX_RECENT_FOLDERS = 5
@@ -47,5 +48,22 @@ object PreferencesManager {
 
     fun clearPreferences() {
         prefs.clear()
+    }
+
+    fun clearRecentFolders() {
+        prefs.put(RECENT_FOLDERS_KEY, "[]")
+    }
+
+    fun getFavorites(): List<FavoriteLocation> {
+        val favoritesJson = prefs.get(FAVORITES_KEY, "[]")
+        return try {
+            json.decodeFromString(favoritesJson)
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    fun saveFavorites(favorites: List<FavoriteLocation>) {
+        prefs.put(FAVORITES_KEY, json.encodeToString(favorites))
     }
 }

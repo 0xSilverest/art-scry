@@ -21,4 +21,18 @@ object FileUtils {
             }
             .toList()
     }
+
+    fun formatFileSize(size: Long): String {
+        return when {
+            size < 1024 -> "$size B"
+            size < 1024 * 1024 -> "${size / 1024} KB"
+            size < 1024 * 1024 * 1024 -> "${size / (1024 * 1024)} MB"
+            else -> "${size / (1024 * 1024 * 1024)} GB"
+        }
+    }
+
+    fun formatLastModified(timestamp: Long): String {
+        val formatter = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm")
+        return formatter.format(java.util.Date(timestamp))
+    }
 }

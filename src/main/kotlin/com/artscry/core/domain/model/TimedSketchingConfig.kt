@@ -5,7 +5,7 @@ data class TimedSketchingConfig(
     val hideArrows: Boolean = false,
     override val randomMode: Boolean = false,
     override val imageLimit: Int? = null
-) : com.artscry.core.domain.model.RandomModeConfig {
+) : RandomModeConfig {
     fun updateRandomMode(
         newRandomMode: Boolean,
         newImageLimit: Int?
