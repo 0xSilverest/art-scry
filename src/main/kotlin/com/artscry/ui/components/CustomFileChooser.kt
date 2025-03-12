@@ -5,6 +5,7 @@ import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -22,9 +23,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberDialogState
+import coil3.ImageLoader
+import coil3.compose.LocalPlatformContext
+import coil3.request.CachePolicy
+import coil3.request.ImageRequest
+import coil3.size.Size
 import com.artscry.core.domain.model.FavoriteLocation
 import com.artscry.core.domain.model.ViewMode
 import com.artscry.util.PreferencesManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.nio.file.Path
@@ -77,12 +84,26 @@ fun CustomFileChooser(
             ?: emptyList()
     }
 
+    val context = LocalPlatformContext.current
+
+    val imageProcessingDispatcher = Dispatchers.IO.limitedParallelism(4)
+
+    val imageLoader = ImageLoader.Builder(context)
+        .diskCachePolicy(CachePolicy.ENABLED)
+        .memoryCachePolicy(CachePolicy.ENABLED)
+        .fetcherCoroutineContext(coroutineScope.coroutineContext + imageProcessingDispatcher)
+        .decoderCoroutineContext(coroutineScope.coroutineContext + imageProcessingDispatcher)
+        .build()
+
     LaunchedEffect(Unit) {
         println("CUSTOM FILE CHOOSER LAUNCHED")
         mainFocusRequester.requestFocus()
+
     }
 
     LaunchedEffect(currentPath) {
+        imageLoader.memoryCache?.clear()
+
         searchQuery = ""
         selectedIndex = lastSelectedIndices[currentPath.toString()] ?: 0
         isSearchFocused = false
@@ -278,6 +299,8 @@ fun CustomFileChooser(
                         previousSelectedIndex = selectedIndex
                     }
 
+                    val visibleIndices = LazyGridVisibilityTracker(gridState)
+
                     when (viewMode) {
                         ViewMode.GRID -> {
                             LazyVerticalGrid(
@@ -428,6 +451,7 @@ fun CustomFileChooser(
                                 items(entries.size) { index ->
                                     val entry = entries[index]
                                     val isSelected = index == selectedIndex
+                                    val isVisible = index in visibleIndices
 
                                     if (entry.isDirectory) {
                                         FolderItem(
@@ -446,7 +470,8 @@ fun CustomFileChooser(
                                     } else {
                                         FilePreview(
                                             file = entry,
-                                            isSelected = isSelected
+                                            isSelected = isSelected,
+                                            isVisible = isVisible
                                         )
                                     }
                                 }
@@ -553,4 +578,23 @@ private fun loadFavorites(): List<FavoriteLocation> {
 
 private fun saveFavorites(favorites: List<FavoriteLocation>) {
     PreferencesManager.saveFavorites(favorites)
+}
+
+@Composable
+fun LazyGridVisibilityTracker(gridState: LazyGridState): List<Int> {
+    val visibleIndices = remember { mutableStateListOf<Int>() }
+
+    LaunchedEffect(gridState) {
+        // This creates a flow that emits whenever the scroll position changes
+        snapshotFlow { gridState.firstVisibleItemIndex to gridState.layoutInfo.visibleItemsInfo.size }
+            .collect { (firstIndex, visibleCount) ->
+                // Update the visible indices
+                visibleIndices.clear()
+                for (i in firstIndex until (firstIndex + visibleCount)) {
+                    visibleIndices.add(i)
+                }
+            }
+    }
+
+    return visibleIndices
 }
