@@ -5,6 +5,7 @@ import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -77,10 +78,6 @@ fun CustomFileChooser(
             ?: emptyList()
     }
 
-    LaunchedEffect(Unit) {
-        println("CUSTOM FILE CHOOSER LAUNCHED")
-        mainFocusRequester.requestFocus()
-    }
 
     LaunchedEffect(currentPath) {
         searchQuery = ""
@@ -446,7 +443,7 @@ fun CustomFileChooser(
                                     } else {
                                         FilePreview(
                                             file = entry,
-                                            isSelected = isSelected
+                                            isSelected = isSelected,
                                         )
                                     }
                                 }
@@ -544,8 +541,6 @@ fun CustomFileChooser(
         )
     }
 }
-
-
 
 private fun loadFavorites(): List<FavoriteLocation> {
     return PreferencesManager.getFavorites()

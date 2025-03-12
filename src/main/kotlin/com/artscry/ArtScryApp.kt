@@ -9,11 +9,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
 import com.artscry.data.database.ArtScryDatabase
 import com.artscry.core.common.AppState
+import com.artscry.ui.components.AppImageLoader
 import com.artscry.ui.screens.MainScreen
 import com.artscry.ui.theme.ArtScryTheme
+import kotlinx.coroutines.runBlocking
 
 fun main() {
     ArtScryDatabase.initialize()
+
+    setupAppExitHandler()
 
     application {
         val state = remember { AppState() }
@@ -58,4 +62,19 @@ fun main() {
             }
         }
     }
+
 }
+
+fun onAppClose() {
+    AppImageLoader.clearMemoryCache()
+
+}
+
+fun setupAppExitHandler() {
+    Runtime.getRuntime().addShutdownHook(Thread {
+        runBlocking {
+            onAppClose()
+        }
+    })
+}
+

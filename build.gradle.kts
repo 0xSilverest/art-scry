@@ -29,6 +29,9 @@ dependencies {
     implementation("edu.stanford.nlp:stanford-corenlp:4.5.4")
     implementation("edu.stanford.nlp:stanford-corenlp:4.5.4:models")
 
+    implementation("io.coil-kt.coil3:coil-compose:3.1.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.7.0") // Use your coroutines version
+
     implementation("org.yaml:snakeyaml:1.30")
 
     implementation("org.jetbrains.exposed:exposed-core:0.41.1")
