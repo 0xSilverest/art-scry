@@ -12,8 +12,8 @@ import androidx.compose.ui.window.Dialog
 import com.artscry.core.domain.model.DialogState
 import com.artscry.core.domain.model.Tag
 import com.artscry.data.repository.DbRepository
+import com.artscry.ui.filechooser.FileChooserModule
 import com.artscry.util.DirectoryScanner
-import com.artscry.util.PreferencesManager
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -23,16 +23,15 @@ fun DirectoryScannerStep1(
     onDismiss: () -> Unit
 ) {
     println("STEP 1: Showing folder chooser")
-    CustomFileChooser(
-        initialDirectory = PreferencesManager.getLastFolder(),
+    FileChooserModule.showFolderChooser(
         onFolderSelected = { path ->
             println("FOLDER SELECTED: $path")
-            PreferencesManager.setLastFolder(path)
             onFolderSelected(path)
         },
         onDismiss = onDismiss
     )
 }
+
 
 @Composable
 fun DirectoryScannerStep2(

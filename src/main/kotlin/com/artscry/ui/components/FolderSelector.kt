@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.artscry.ui.filechooser.FileChooserModule
 import com.artscry.util.PreferencesManager
 import java.io.File
 
@@ -97,10 +98,8 @@ fun FolderSelector(onFolderSelected: (String) -> Unit) {
     }
 
     if (showChooser) {
-        CustomFileChooser(
-            initialDirectory = PreferencesManager.getLastFolder(),
+        FileChooserModule.showFolderChooser(
             onFolderSelected = { path ->
-                PreferencesManager.setLastFolder(path)
                 recentFolders.value = PreferencesManager.getRecentFolders()
                 onFolderSelected(path)
             },

@@ -16,7 +16,9 @@ import kotlinx.coroutines.delay
 fun TimerDisplay(
     config: TimerConfig,
     imageChangeCount: Int,
+    isLastImage: Boolean,
     onTimerComplete: () -> Unit,
+    onSessionComplete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var timeLeft by remember { mutableStateOf(config.duration) }
@@ -38,7 +40,12 @@ fun TimerDisplay(
             }
 
             if (timeLeft == 0) {
-                onTimerComplete()
+                if (isLastImage) {
+                    // We're on the last image and the timer has completed
+                    onSessionComplete()
+                } else {
+                    onTimerComplete()
+                }
                 timeLeft = config.duration
                 isBlackedOut = false
             }

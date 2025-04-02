@@ -82,7 +82,7 @@ fun AddFavoriteDialog(
                     TextButton(onClick = onDismiss) { Text("Cancel") }
                     Spacer(Modifier.width(8.dp))
                     Button(
-                        onClick = { /* ... */ },
+                        onClick = { onAdd(favoriteNameInput, currentPath) },
                         enabled = favoriteNameInput.isNotBlank()
                     ) { Text("Add") }
                 }

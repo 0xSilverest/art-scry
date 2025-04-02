@@ -15,6 +15,7 @@ import com.artscry.data.repository.DbRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class AppState {
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -55,21 +56,38 @@ class AppState {
     val imageChangeCounter get() = imageManager.imageChangeCounter
 
     fun onNextImage() {
-        if (currentImageIndex < images.size - 1) {
-            blackoutManager.clearBlackout()
-            imageManager.onNextImage()
+        if (currentImageIndex != 0 && currentImageIndex % 10 == 0) {
+            scope.launch(Dispatchers.IO) {
+                imageCache.clearCache()
+            }
+        }
 
-            viewerSettings?.let { settings ->
-                if (settings.mode == PracticeMode.BLACKOUT_PRACTICE) {
-                    timerManager.isTimerActive = true
-                    blackoutManager.startBlackout(settings.blackoutDuration)
+        if (currentImageIndex >= images.size - 1) {
+            if (isTimerActive) {
+                viewerSettings = null
+                imageManager.images = emptyList()
+                imageCache.clearCache()
+                stopTimer()
+                if (onBlackout) {
+                    blackoutManager.clearBlackout()
+                }
+            }
+            return
+        }
 
-                    if (settings.practiceTimerEnabled) {
-                        blackoutManager.startBlackoutPracticeTimer(
-                            settings.practiceTimerDuration,
-                            onComplete = { onNextImage() }
-                        )
-                    }
+        blackoutManager.clearBlackout()
+        imageManager.onNextImage()
+
+        viewerSettings?.let { settings ->
+            if (settings.mode == PracticeMode.BLACKOUT_PRACTICE) {
+                timerManager.isTimerActive = true
+                blackoutManager.startBlackout(settings.blackoutDuration)
+
+                if (settings.practiceTimerEnabled) {
+                    blackoutManager.startBlackoutPracticeTimer(
+                        settings.practiceTimerDuration,
+                        onComplete = { onNextImage() }
+                    )
                 }
             }
         }

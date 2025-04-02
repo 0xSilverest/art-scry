@@ -39,10 +39,11 @@ fun MainScreen(state: AppState) {
         SetupScreen(imageRepository = state.repository) { settings ->
             state.viewerSettings = settings
 
-            if (settings.preloadedImages != null && settings.preloadedImages.isNotEmpty()) {
+            if (!settings.preloadedImages.isNullOrEmpty()) {
                 println("Using ${settings.preloadedImages.size} preloaded images")
                 val imagesToUse = if (settings.randomMode && settings.imageLimit != null &&
-                    settings.imageLimit < settings.preloadedImages.size) {
+                    settings.imageLimit < settings.preloadedImages.size
+                ) {
                     settings.preloadedImages.shuffled().take(settings.imageLimit)
                 } else {
                     settings.preloadedImages
@@ -226,12 +227,19 @@ fun MainScreen(state: AppState) {
                     TimerDisplay(
                         config = state.timerConfig!!,
                         imageChangeCount = state.imageChangeCounter,
+                        isLastImage = state.currentImageIndex >= state.images.size - 1,
                         onTimerComplete = {
                             if (!isBlackoutConfig) {
                                 state.onNextImage()
                             } else {
                                 state.stopTimer()
                             }
+                        },
+                        onSessionComplete = {
+                            state.viewerSettings = null
+                            state.imageManager.images = emptyList()
+                            state.imageCache.clearCache()
+                            state.stopTimer()
                         }
                     )
                 }

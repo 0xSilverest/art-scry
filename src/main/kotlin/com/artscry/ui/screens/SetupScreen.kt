@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.sp
 import com.artscry.core.domain.model.*
 import com.artscry.data.repository.DbRepository
 import com.artscry.ui.components.*
+import com.artscry.ui.filechooser.CustomFileChooser
+import com.artscry.ui.filechooser.FileChooserModule
 import com.artscry.ui.theme.ThemeState
 import com.artscry.ui.theme.artScryColors
 import com.artscry.util.PreferencesManager
@@ -31,18 +33,15 @@ fun SetupScreen(
     imageRepository: DbRepository,
     onStart: (ViewerSettings) -> Unit
 ) {
-    val scope = rememberCoroutineScope()
-
     var showDirectoryScanner by remember { mutableStateOf(false) }
     var showTagBasedLoader by remember { mutableStateOf(false) }
 
     var selectedMode by remember { mutableStateOf<PracticeMode?>(null) }
     var folderPath by remember { mutableStateOf<String?>(null) }
     var showModeMenu by remember { mutableStateOf(false) }
-    var showFolderSelector by remember { mutableStateOf(false) }
     var showChooser by remember { mutableStateOf(false) }
     var showTagReviewDialog by remember { mutableStateOf(false) }
-    var selectedTags by remember { mutableStateOf<List<Tag>>(emptyList()) }
+    val selectedTags by remember { mutableStateOf<List<Tag>>(emptyList()) }
 
     val scrollState = rememberScrollState()
 
@@ -497,19 +496,12 @@ fun SetupScreen(
             )
         }
 
-        if (showFolderSelector) {
-            FolderSelector { path ->
-                folderPath = path
-            }
-        }
-
         if (showChooser) {
-            CustomFileChooser(
-                initialDirectory = PreferencesManager.getLastFolder(),
+            FileChooserModule.showFolderChooser(
                 onFolderSelected = { path ->
-                    PreferencesManager.setLastFolder(path)
                     folderPath = path
                     showChooser = false
+                    selectedMode = PracticeMode.FREE_VIEWING
                 },
                 onDismiss = { showChooser = false }
             )

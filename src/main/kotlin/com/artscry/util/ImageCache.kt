@@ -61,8 +61,12 @@ class ImageCache(
 
             withContext(Dispatchers.IO) {
                 val bytes = File(path).readBytes()
+                val fileSize = bytes.size / 1024  // Size in KB
                 withContext(Dispatchers.Default) {
                     val bitmap = Image.makeFromEncoded(bytes).toComposeImageBitmap()
+
+                    println("Image loaded: $path | Dimensions: ${bitmap.width}x${bitmap.height} | File size: $fileSize KB")
+
                     cache[path] = bitmap
                     bitmap
                 }
@@ -110,6 +114,7 @@ class ImageCache(
     fun clearCache() {
         scope.launch(Dispatchers.Default) {
             mutex.withLock {
+                println("Clearing cache")
                 loadingJobs.values.forEach { it.cancel() }
                 loadingJobs.clear()
                 cache.clear()
